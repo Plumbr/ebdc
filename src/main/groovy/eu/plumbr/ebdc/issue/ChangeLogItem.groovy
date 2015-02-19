@@ -1,5 +1,8 @@
 package eu.plumbr.ebdc.issue
 
+import groovy.transform.ToString
+
+@ToString
 class ChangeLogItem {
   String field
   String fieldType

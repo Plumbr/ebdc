@@ -8,5 +8,8 @@ import eu.plumbr.ebdc.issue.BacklogIssue
 interface LocalStorage {
   void refresh()
 
+  /**
+   * @return issueKey -> issue
+   */
   Map<String, BacklogIssue> getAll()
 }

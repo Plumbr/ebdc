@@ -15,7 +15,6 @@ apply plugin: 'idea'
 apply plugin: 'spring-boot'
 apply plugin: 'war'
 
-
 war {
   baseName = 'ebdc'
   version = '0.0.1-SNAPSHOT'
@@ -49,4 +48,8 @@ dependencies {
 
 task wrapper(type: Wrapper) {
   gradleVersion = '2.2.1'
+}
+
+springBoot {
+  mainClass = "eu.plumbr.ebdc.EbdcApplication"
 }

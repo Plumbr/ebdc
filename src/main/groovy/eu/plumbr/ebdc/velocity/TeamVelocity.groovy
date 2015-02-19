@@ -5,22 +5,24 @@ import eu.plumbr.ebdc.issue.BacklogIssue
 import eu.plumbr.ebdc.storage.JsonLocalStorage
 import eu.plumbr.ebdc.storage.LocalStorage
 import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics
+import org.springframework.beans.factory.annotation.Autowired
+import org.springframework.stereotype.Component
 
 /**
  * Created by Nikem on 27/12/14.
  */
+@Component
 class TeamVelocity {
-  Map<String, Map<Integer, Integer>> personToWeekToIssueCount = new TreeMap<>().withDefault {
-    new TreeMap<>().withDefault { 0 }
-  }
+  private Map<String, Map<Integer, Integer>> personToWeekToIssueCount
   private LocalStorage localStorage
 
+  @Autowired
   TeamVelocity(LocalStorage localStorage) {
     this.localStorage = localStorage
-    fillCounts()
   }
 
   String toCsv() {
+    refreshCounts()
     def personalLines = personToWeekToIssueCount.collect { k, v ->
       ([k] + v.values().collect { it.toString() }).join(';')
     }
@@ -30,6 +32,7 @@ class TeamVelocity {
   }
 
   String toCumulativeCsv() {
+    refreshCounts()
     Map weekCounts = cumulativeWeekCounts()
     String headerRow = weekCounts.keySet().collect { it.toString() }.join(';')
     headerRow + '\n' + weekCounts.values().join(';')
@@ -47,6 +50,7 @@ class TeamVelocity {
   }
 
   String toSmoothCumulativeCsv() {
+    refreshCounts()
     def statistics = new DescriptiveStatistics()
     statistics.setWindowSize(12)
 
@@ -67,7 +71,11 @@ class TeamVelocity {
     'Developer;' + personToWeekToIssueCount[anyKey].collect { k, v -> k }.join(';')
   }
 
-  private void fillCounts() {
+  private void refreshCounts() {
+    personToWeekToIssueCount = new TreeMap<>().withDefault {
+      new TreeMap<>().withDefault { 0 }
+    }
+
     def allIssues = localStorage.all
     allIssues.values().each { BacklogIssue issue ->
       personToWeekToIssueCount[issue.assignee ?: 'unassigned'][issue.weekFixed()] = personToWeekToIssueCount[issue.assignee ?: 'unassigned'][issue.weekFixed()] + issue.size()
@@ -89,8 +97,14 @@ class TeamVelocity {
 
   public static void main(String[] args) {
     def teamVelocity = new TeamVelocity(new JsonLocalStorage(null))
-    new File('teamVelocity.csv').text = teamVelocity.toCsv()
-    new File('teamCumulativeVelocity.csv').text = teamVelocity.toCumulativeCsv()
-    new File('teamSmoothCumulativeVelocity.csv').text = teamVelocity.toSmoothCumulativeCsv()
+//    new File('teamVelocity.csv').text = teamVelocity.toCsv()
+//    new File('teamCumulativeVelocity.csv').text = teamVelocity.toCumulativeCsv()
+//    new File('teamSmoothCumulativeVelocity.csv').text = teamVelocity.toSmoothCumulativeCsv()
+
+    teamVelocity.refreshCounts()
+    teamVelocity.personToWeekToIssueCount.each { String dev, def weekToCount ->
+      def total = weekToCount.findAll { k, v -> k > 201400 && k < 201500 }.values().sum()
+      println "$dev has done $total last year"
+    }
   }
 }

@@ -9,7 +9,7 @@ import spock.lang.Specification
  */
 class TeamVelocityTest extends Specification {
 
-  def "should return each person on separate line"() {
+  def "csv should return each person on separate line"() {
     setup:
     def issue1 = Mock(BacklogIssue)
     issue1.weekFixed() >> 201402
@@ -37,7 +37,7 @@ class TeamVelocityTest extends Specification {
     lines[2].startsWith('nikita')
   }
 
-  def "each line should be sorted by week number"() {
+  def "each csv line should be sorted by week number"() {
     setup:
     def storage = Mock(LocalStorage)
     storage.all >> [
@@ -55,7 +55,7 @@ class TeamVelocityTest extends Specification {
     csv.readLines()[1] == 'nikita;2;1'
   }
 
-  def "each in-between week should be present with 0 value"() {
+  def "each in-between week should be present in csv with 0 value"() {
     setup:
     def issue1 = Mock(BacklogIssue)
     issue1.weekFixed() >> 201402
@@ -82,7 +82,7 @@ class TeamVelocityTest extends Specification {
     csv.readLines()[1] == 'nikita;1;0;0;1'
   }
 
-  def "should have header row with all weeks"() {
+  def "csv should have header row with all weeks"() {
     setup:
     def storage = Mock(LocalStorage)
     storage.all >> [
@@ -99,7 +99,7 @@ class TeamVelocityTest extends Specification {
     csv.readLines()[0] == 'Developer;201402;201403;201404;201405'
   }
 
-  def "should return cumulative velocity"() {
+  def "csv should return cumulative velocity"() {
     setup:
     def storage = Mock(LocalStorage)
     storage.all >> [

@@ -24,6 +24,8 @@ class BacklogIssue {
 
   List<ChangeLogEntry> changeLog
 
+  List<Version> fixVersions
+
   BacklogIssue() {}
 
   BacklogIssue(Issue issue) {
@@ -37,11 +39,12 @@ class BacklogIssue {
     this.updateDate = new DateTime(issue.updatedDate).toString(Utils.DATE_FORMAT)
     this.priority = issue.priority?.name
     this.changeLog = issue.changeLog.entries.collect { new ChangeLogEntry(it) }
+    this.fixVersions = issue.fixVersions.collect { new Version(it) }
   }
 
   public int weekCompleted() {
     ChangeLogEntry change = changeLog.find { ChangeLogEntry entry ->
-      entry.items.find { ChangeLogItem item -> item.toString == 'Closed' } != null
+      entry.items.find { ChangeLogItem item -> item.toString == 'Closed' || item.toString == 'Resolved' } != null
     } as ChangeLogEntry
     change != null ? Utils.weekNumber(new DateTime(change.created)) : 0
   }
@@ -51,6 +54,39 @@ class BacklogIssue {
       entry.items.find { ChangeLogItem item -> item.field == 'resolution' && item.toString == 'Fixed' } != null
     } as ChangeLogEntry
     change != null ? Utils.weekNumber(DateTime.parse(change.created, DateTimeFormat.forPattern(Utils.DATE_FORMAT))) : 0
+  }
+
+  public int weekFirstPlanned() {
+    def planned = firstPlanned()
+    planned != null ? Utils.weekNumber(planned) : 0
+  }
+
+  public DateTime firstPlanned() {
+    ChangeLogEntry change = firstFixVersionEntry()
+    change != null ? DateTime.parse(change.created, DateTimeFormat.forPattern(Utils.DATE_FORMAT)) : null
+  }
+
+
+  public String firstFixVersion() {
+    firstFixVersionEntry()?.items?.find { ChangeLogItem item -> item.field == 'Fix Version' && item.toString != null }?.toString
+  }
+
+  public String currentFixVersion() {
+    fixVersions.isEmpty() ? null : fixVersions.first().name
+  }
+
+  private ChangeLogEntry firstFixVersionEntry() {
+    ChangeLogEntry change = changeLog.find { ChangeLogEntry entry ->
+      entry.items.find { ChangeLogItem item -> item.field == 'Fix Version' && item.toString != null } != null
+    } as ChangeLogEntry
+    return change
+  }
+
+  private ChangeLogEntry lastFixVersionEntry() {
+    def fixVersionChangeEntries = changeLog.findAll { ChangeLogEntry entry ->
+      entry.items.find { ChangeLogItem item -> item.field == 'Fix Version' && item.toString != null } != null
+    }
+    fixVersionChangeEntries.isEmpty() ? null : fixVersionChangeEntries.last()
   }
 
 
